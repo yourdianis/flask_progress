@@ -1,9 +1,12 @@
 import random
-from flask import Blueprint, render_template, jsonify
-from exts import mail, redis_client
+from flask import Blueprint, render_template, jsonify, redirect, url_for
+from exts import mail, redis_client, db
 from flask_mail import Message
 from flask import request
 import string
+from .forms import RegisterForm
+from models import UserModel
+from werkzeug.security import generate_password_hash
 
 bp = Blueprint("auth", __name__, url_prefix='/auth')
 
@@ -13,13 +16,33 @@ def login():
     pass
 
 
-@bp.route('/register')
+# GET：从服务器请求获取数据
+# POST：将客户端的数据提交给服务器
+@bp.route('/register', methods=['GET','POST'])
 def register():
-    # 验证用户输入的验证码和邮箱的是否对应
-    # 表单验证：flask-wtf: wtfroms
 
-    # 验证用户提交的邮箱和验证码是否对应且正确
-    return render_template("register.html")
+    if request.method == "GET":
+        return render_template("register.html")
+    else:
+        # 验证用户提交的邮箱和验证码是否对应且正确
+        # 验证用户输入的验证码和邮箱的是否对应
+        # 表单验证：flask-wtf: wtfroms
+        form = RegisterForm(request.form)
+        if form.validate():
+            email = form.email.data
+            username = form.username.data
+            password = form.password.data
+            # 创建一个新的用户实例，使用generate_password_hash方法对密码进行哈希处理。
+            user = UserModel(username=username, email=email, password=generate_password_hash(password))
+            # 将新创建的用户添加到数据库会话中。
+            db.session.add(user)
+            # 提交数据库会话，将新用户信息保存到数据库中。
+            db.session.commit()
+            # 重定向到登录页面。
+            return redirect(url_for("auth.login"))
+        else:
+            print(form.errors)
+            return redirect(url_for("auth.register"))
 
 
 @bp.route('/captcha/email')
