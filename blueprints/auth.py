@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import r和om
 from flask import Blueprint, render_template, jsonify
 from exts import mail, redis_client
