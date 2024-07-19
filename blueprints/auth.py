@@ -1,4 +1,4 @@
-import random
+import r和om
 from flask import Blueprint, render_template, jsonify
 from exts import mail, redis_client
 from flask_mail import Message
